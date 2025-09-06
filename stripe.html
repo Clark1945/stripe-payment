@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全付款 - Stripe</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .security-badge i {
+            color: #48bb78;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #e53e3e;
+        }
+
+        #card-element {
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        #card-element:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #card-element.StripeElement--invalid {
+            border-color: #e53e3e;
+        }
+
+        .payment-summary {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #4a5568;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 18px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        .submit-btn.loading .spinner {
+            display: inline-block;
+        }
+
+        .submit-btn.loading .btn-text {
+            opacity: 0.7;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .trusted-brands {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            opacity: 0.6;
+        }
+
+        .brand-logo {
+            height: 24px;
+            opacity: 0.7;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+
+        .brand-logo:hover {
+            opacity: 1;
+            filter: grayscale(0%);
+        }
+
+        .payment-methods {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .payment-method {
+            width: 40px;
+            height: 28px;
+            background: #f7fafc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a5568;
+            font-size: 18px;
+        }
+
+        @media (max-width: 480px) {
+            .payment-container {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="payment-container">
+    <div class="header">
+        <h1><i class="fas fa-credit-card"></i> 安全付款</h1>
+        <p>使用 Stripe 安全付款系統</p>
+    </div>
+
+    <div class="security-badge">
+        <i class="fas fa-shield-alt"></i>
+        <span>SSL 加密保護 • PCI DSS 合規</span>
+    </div>
+
+    <div class="payment-summary">
+        <div class="summary-row">
+            <span>商品金額</span>
+            <span>NT$ 1,200</span>
+        </div>
+        <div class="summary-row">
+            <span>運費</span>
+            <span>NT$ 100</span>
+        </div>
+        <div class="summary-row">
+            <span>總金額</span>
+            <span>NT$ 1,300</span>
+        </div>
+    </div>
+
+    <form id="payment-form">
+        <div class="form-group">
+            <label class="form-label" for="email">
+                <i class="fas fa-envelope"></i> 電子信箱
+            </label>
+            <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="name">
+                <i class="fas fa-user"></i> 持卡人姓名
+            </label>
+            <input type="text" id="name" class="form-input" placeholder="請輸入姓名" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-credit-card"></i> 信用卡資訊
+            </label>
+            <div id="card-element">
+                <!-- Stripe Elements 會插入這裡 -->
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">
+            <div class="spinner"></div>
+            <span class="btn-text">
+                    <i class="fas fa-lock"></i> 立即付款 NT$ 1,300
+                </span>
+        </button>
+
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
+    </form>
+
+    <div class="payment-methods">
+        <div class="payment-method" title="Visa">
+            <i class="fab fa-cc-visa"></i>
+        </div>
+        <div class="payment-method" title="Mastercard">
+            <i class="fab fa-cc-mastercard"></i>
+        </div>
+        <div class="payment-method" title="American Express">
+            <i class="fab fa-cc-amex"></i>
+        </div>
+        <div class="payment-method" title="JCB">
+            <i class="fab fa-cc-jcb"></i>
+        </div>
+    </div>
+
+    <div class="trusted-brands">
+        <small>Powered by</small>
+        <svg width="50" height="20" viewBox="0 0 60 25" class="brand-logo">
+            <path fill="#6772e5" d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a8.33 8.33 0 0 1-4.56 1.1c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.48zm-5.92-5.62c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.3c-1.44 0-2.32-.6-2.9-1.04l-.02 4.63-4.12.87V5.57h3.76l.08 1.02a4.7 4.7 0 0 1 3.23-1.29c2.9 0 5.62 2.6 5.62 7.4 0 5.23-2.7 7.6-5.65 7.6zM40 8.95c-.95 0-1.54.34-1.97.81l.02 6.12c.4.44.98.78 1.95.78 1.52 0 2.54-1.65 2.54-3.87 0-2.15-1.04-3.84-2.54-3.84zM28.24 5.57h4.13v14.44h-4.13V5.57zm0-4.7L32.37 0v3.36l-4.13.88V.88zm-4.32 9.35v9.79H19.8V5.57h3.7l.12 1.22c1-1.77 3.07-1.41 3.62-1.22v3.79c-.52-.17-2.29-.43-3.32.86zm-8.55 4.72c0 2.43 2.6 1.68 3.12 1.46v3.36c-.55.3-1.54.54-2.89.54a4.15 4.15 0 0 1-4.27-4.24l.01-13.17L15.8 6.5v.85H18.17v3.24H15.8V11.64h.01zm-9.29.3c0 2.95-2.05 4.9-5.17 4.9-3.15 0-5.25-1.87-5.25-4.81V5.6h4.09v9.5c0 1.58.66 2.2 1.56 2.2.92 0 1.64-.53 1.64-2.16V5.6h4.13v9.94z"/>
+        </svg>
+    </div>
+</div>
+
+<script>
+    // 請在這裡填入您的 Stripe 公鑰
+    const stripe = Stripe("pk_test_51S40i18zv6ZWOHoDTDh3BKMTvydnbx9b7D5NFdtaxus8cLTNG6DwtUwUNMpb0myAQRCUDctQywJc8c0vHXno8U9G00B2Uqmm2k");
+    const elements = stripe.elements({
+        fonts: [
+            {
+                cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap',
+            }
+        ]
+    });
+
+    // 自定義 Stripe Elements 樣式
+    const style = {
+        base: {
+            fontSize: '16px',
+            color: '#2d3748',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            '::placeholder': {
+                color: '#a0aec0',
+            },
+            iconColor: '#4a5568',
+        },
+        invalid: {
+            color: '#e53e3e',
+            iconColor: '#e53e3e',
+        },
+        complete: {
+            iconColor: '#48bb78',
+        }
+    };
+
+    const card = elements.create('card', {
+        style: style,
+        hidePostalCode: true
+    });
+
+    card.mount('#card-element');
+
+    // 處理卡片元素的樣式變化
+    card.on('change', ({error}) => {
+        const displayError = document.getElementById('error-message');
+        const cardElement = document.getElementById('card-element');
+        if (error) {
+            displayError.textContent = error.message;
+            displayError.style.display = 'block';
+            cardElement.classList.add('StripeElement--invalid');
+        } else {
+            displayError.style.display = 'none';
+            cardElement.classList.remove('StripeElement--invalid');
+        }
+    });
+
+    // 表單提交處理
+    const form = document.getElementById('payment-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // 開始載入狀態
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+        errorMessage.style.display = 'none';
+        successMessage.style.display = 'none';
+
+        // 獲取表單數據
+        const email = document.getElementById('email').value;
+        const name = document.getElementById('name').value;
+
+        try {
+            // 建立PaymentMethod並取得paymentMethod.id，後端使用id進行付款
+            const { error, paymentMethod } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: card,
+                billing_details: {
+                    name: name,
+                    email: email,
+                },
+            });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            const paymentData = {
+                paymentMethodId: paymentMethod.id,
+                amount: 1300, // 金額（以新台幣分為單位，1300 = NT$13.00，如果是 NT$1300 則應該是 130000）
+                currency: 'twd',
+                customerInfo: {
+                    name: name,
+                    email: email
+                },
+                // 可以添加其他需要的資料
+                orderInfo: {
+                    orderId: 'ORDER_' + Date.now(),
+                    description: '商品購買'
+                }
+            };
+
+            const response = await fetch('http://localhost:8080/stripe/pay', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 如果需要認證token，可以添加：
+                    // 'Authorization': 'Bearer ' + yourAuthToken
+                },
+                body: JSON.stringify(paymentData)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    return stripe.confirmCardPayment(data.clientSecret);
+                })
+                .then(result => {
+                    if (result.error) {
+                        throw new Error(result.error.message || '付款處理失敗');
+                    } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                        // 付款成功
+                        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> 付款成功！感謝您的購買。';
+
+                        successMessage.style.display = 'block';
+                        // 可以根據後端返回的資料做其他處理
+
+                        console.log('付款成功：', result);
+                        // 重置表單（可選）
+
+                        setTimeout(() => {
+                            form.reset();
+                            card.clear();
+                        }, 2000);
+                    }
+                });
+
+            // 顯示成功訊息
+            successMessage.innerHTML = '<i class="fas fa-check-circle"></i> 付款成功！感謝您的購買。';
+            successMessage.style.display = 'block';
+
+            // 重置表單（可選）
+            setTimeout(() => {
+                form.reset();
+                card.clear();
+            }, 2000);
+
+        } catch (err) {
+            errorMessage.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message}`;
+            errorMessage.style.display = 'block';
+            console.error('付款失敗：', err.message);
+        } finally {
+            // 恢復按鈕狀態
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+        }
+    });
+
+    // 表單驗證
+    const inputs = document.querySelectorAll('.form-input');
+    inputs.forEach(input => {
+        input.addEventListener('blur', validateInput);
+        input.addEventListener('input', clearValidation);
+    });
+
+    function validateInput(e) {
+        const input = e.target;
+        const value = input.value.trim();
+
+        if (input.hasAttribute('required') && !value) {
+            input.classList.add('error');
+        } else if (input.type === 'email' && !isValidEmail(value)) {
+            input.classList.add('error');
+        } else {
+            input.classList.remove('error');
+        }
+    }
+
+    function clearValidation(e) {
+        e.target.classList.remove('error');
+    }
+
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    // 添加一些互動效果
+    document.addEventListener('DOMContentLoaded', function() {
+        // 為付款方式圖標添加懸停效果
+        const paymentMethods = document.querySelectorAll('.payment-method');
+        paymentMethods.forEach(method => {
+            method.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+                this.style.backgroundColor = '#e2e8f0';
+            });
+
+            method.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.backgroundColor = '#f7fafc';
+            });
+        });
+    });
+</script>
+</body>
+</html>

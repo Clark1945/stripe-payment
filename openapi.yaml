@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: Stripe Demo API
+  description: API for processing payments with Stripe.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /stripe/pay:
+    post:
+      summary: Process a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInfo'
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clientSecret:
+                    type: string
+        '400':
+          description: Invalid request
+components:
+  schemas:
+    PaymentInfo:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+        paymentMethodId:
+          type: string
+        currency:
+          type: string
+        customerInfo:
+          $ref: '#/components/schemas/CustomerInfo'
+    CustomerInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
