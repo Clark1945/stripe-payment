@@ -2,6 +2,9 @@
 
 This is a demo project that demonstrates how to integrate with Stripe for processing payments. It is a Spring Boot application that provides a single endpoint for creating a PaymentIntent with Stripe.
 
+![Stripe Logo](stripe.png)
+
+
 ## Building and Running the Project
 
 To build and run the project, you can use the following Maven commands:
