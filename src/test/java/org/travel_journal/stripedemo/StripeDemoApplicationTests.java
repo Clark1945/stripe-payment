@@ -12,12 +12,6 @@ class StripeDemoApplicationTests {
 
     @Test
     void contextLoads() throws StripeException {
-        Stripe.apiKey = "sk_test_26PHem9AhJZvU623DfE1x4sd";
-        RequestOptions requestOptions = RequestOptions.builder()
-                .setApiKey("sk_test_26PHem9AhJZvU623DfE1x4sd")
-                .build();
-        Charge charge = Charge.retrieve("ch_3Ln3ga2eZvKYlo2C11iwHdxy", requestOptions);
-
     }
 
 }
