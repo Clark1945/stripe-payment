@@ -1,5 +1,8 @@
-FROM openjdk:17-jdk-slim
-ARG JAR_FILE=target/stripe-demo-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
-EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app.jar"]
+# Use Amazon Corretto 17 as base
+FROM public.ecr.aws/lambda/java:17
+
+# Copy jar file
+COPY target/springboot-lambda-stripe-0.0.1-SNAPSHOT.jar ${LAMBDA_TASK_ROOT}/
+
+# Set the Lambda handler
+CMD ["com.example.lambda.LambdaHandler::handleRequest"]

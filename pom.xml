@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.travel_journal</groupId>
-    <artifactId>stripe-demo</artifactId>
+    <artifactId>springboot-lambda-stripe</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>stripe-demo</name>
+    <name>springboot-lambda-stripe</name>
     <description>stripe-demo</description>
     <url/>
     <licenses>
@@ -43,6 +43,13 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.5.0</version>
+        </dependency>
+
+        <!-- AWS Serverless Java Container -->
+        <dependency>
+            <groupId>com.amazonaws.serverless</groupId>
+            <artifactId>aws-serverless-java-container-springboot2</artifactId>
+            <version>1.8</version>
         </dependency>
 
         <dependency>
