@@ -6,10 +6,7 @@ import com.stripe.model.PaymentMethod;
 import com.stripe.param.PaymentIntentCreateParams;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -84,5 +81,10 @@ public class StripController {
         } finally {
             log.info("customer:{}付款結束...",customer);
         }
+    }
+
+    @GetMapping("/check")
+    public String check() {
+        return "I'm alive!";
     }
 }
