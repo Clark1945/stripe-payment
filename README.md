@@ -6,7 +6,7 @@ This is a demo project that demonstrates how to integrate with Stripe for proces
 
 Reference this page ▼
 
-[https://myawsbucketclarktest20250907.s3.ap-northeast-2.amazonaws.com/index.html](https://myawsbucketclarktest20250907.s3.ap-northeast-2.amazonaws.com/index.html)
+[https://d3jvlj7as8opnj.cloudfront.net/](https://d3jvlj7as8opnj.cloudfront.net/)
 
 ## Building and Running the Project
 
